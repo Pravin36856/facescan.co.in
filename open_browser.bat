@@ -1,0 +1,3 @@
+@echo off
+echo Opening FaceSnap AI in your default browser...
+start "" "http://127.0.0.1:8000"

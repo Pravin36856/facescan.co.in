@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FaceSnap AI - Smart Photo Delivery Platform for Photographers</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fdf4ff',
+              100: '#fae8ff',
+              500: '#d946ef',
+              600: '#c026d3',
+              700: '#a21caf',
+            },
+            accent: {
+              500: '#6366f1',
+              600: '#4f46e5'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .glassmorphism {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .dark-glass {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.05); opacity: 0.4; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+    .animate-pulse-ring {
+      animation: pulse-ring 2.5s infinite ease-in-out;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col font-sans antialiased">
+
+  <!-- Top Navigation Bar -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="switchView('dashboard')">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-accent-600 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
+          <i data-lucide="scan-face" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <span class="text-xl font-black tracking-tight bg-gradient-to-r from-brand-600 to-accent-600 bg-clip-text text-transparent">FaceSnap AI</span>
+          <span class="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-brand-100 text-brand-700">Studio SaaS</span>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="hidden md:flex items-center space-x-1 bg-slate-100 p-1 rounded-xl">
+        <button id="nav-dashboard" onclick="switchView('dashboard')" class="px-4 py-2 text-sm font-medium rounded-lg transition-all bg-white text-slate-900 shadow-sm">
+          <i data-lucide="layout-dashboard" class="w-4 h-4 inline mr-1.5"></i>Photographer Studio
+        </button>
+        <button id="nav-client" onclick="switchView('client')" class="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:text-slate-900 transition-all">
+          <i data-lucide="user-check" class="w-4 h-4 inline mr-1.5"></i>Client Face Scan
+        </button>
+        <button id="nav-pricing" onclick="switchView('pricing')" class="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:text-slate-900 transition-all">
+          <i data-lucide="badge-dollar-sign" class="w-4 h-4 inline mr-1.5"></i>SaaS Pricing & Plans
+        </button>
+      </nav>
+
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        <!-- Subscription Status Badge -->
+        <button id="nav-sub-badge" onclick="openSubscriptionModal()" class="inline-flex items-center px-3 py-1.5 text-xs font-bold rounded-xl bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-all shadow-sm">
+          <i data-lucide="lock" class="w-3.5 h-3.5 mr-1.5 text-amber-600"></i>
+          <span id="nav-sub-text">1-Year Pass: Inactive (Buy ₹1,000)</span>
+        </button>
+
+        <!-- Admin Key Generator (For YOU, the seller) -->
+        <button onclick="openAdminKeyModal()" class="p-2 text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-all border border-slate-200" title="Admin: Generate ₹1,000 Keys to Sell">
+          <i data-lucide="key" class="w-4 h-4 text-brand-600"></i>
+        </button>
+
+        <!-- Share Reference Link with Photographers -->
+        <button onclick="openSharePitchModal()" class="inline-flex items-center px-3 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 transition-all">
+          <i data-lucide="send" class="w-3.5 h-3.5 mr-1.5"></i>Share with Photographers
+        </button>
+
+        <button onclick="checkAndOpenCreateEventModal()" class="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-xl bg-brand-600 text-white hover:bg-brand-700 shadow-md shadow-brand-600/20 transition-all">
+          <i data-lucide="plus" class="w-4 h-4 mr-1.5"></i>New Event
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Dynamic Content Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- ======================================================== -->
+    <!-- VIEW 1: PHOTOGRAPHER STUDIO DASHBOARD -->
+    <!-- ======================================================== -->
+    <section id="view-dashboard" class="space-y-8">
+      <!-- Welcome Hero Banner -->
+      <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-8 text-white shadow-xl">
+        <div class="relative z-10 max-w-3xl">
+          <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/10 text-brand-300 text-xs font-semibold backdrop-blur-md mb-4">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <span>AI Face Recognition Engine Active</span>
+          </div>
+          <h1 class="text-3xl sm:text-4xl font-black tracking-tight text-white mb-2">
+            Upload Multi-Day Orders. <br class="hidden sm:inline"/>Deliver Photos with Instant Face Scan.
+          </h1>
+          <p class="text-slate-300 text-sm sm:text-base mb-6">
+            Photographer bulk me saari photos (Day 1 Haldi se lekar last day Reception tak) upload karega. Client sirf apna face scan karega aur uski saari photos 1 second me mil jayengi!
+          </p>
+          <div class="flex flex-wrap gap-3">
+            <button onclick="openCreateEventModal()" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 font-semibold text-sm transition-all flex items-center shadow-lg shadow-brand-600/30">
+              <i data-lucide="calendar-plus" class="w-4 h-4 mr-2"></i> Create Wedding / Event Order
+            </button>
+            <button onclick="switchView('pricing')" class="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 font-semibold text-sm backdrop-blur-md transition-all flex items-center">
+              <i data-lucide="gem" class="w-4 h-4 mr-2"></i> Sell to Photographers (SaaS Plans)
+            </button>
+          </div>
+        </div>
+        <!-- Decorative Glow -->
+        <div class="absolute -right-20 -top-20 w-96 h-96 bg-brand-500/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute right-40 -bottom-20 w-80 h-80 bg-accent-500/20 rounded-full blur-3xl pointer-events-none"></div>
+      </div>
+
+      <!-- Quick Metrics Stats -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+            <i data-lucide="calendar" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Events</p>
+            <h3 id="stat-total-events" class="text-2xl font-bold text-slate-900">0</h3>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <i data-lucide="image" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Photos</p>
+            <h3 id="stat-total-photos" class="text-2xl font-bold text-slate-900">0</h3>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-xl bg-pink-50 text-brand-600 flex items-center justify-center">
+            <i data-lucide="scan-face" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Faces Indexed</p>
+            <h3 id="stat-total-faces" class="text-2xl font-bold text-slate-900">0</h3>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <i data-lucide="qr-code" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Client Face Scans</p>
+            <h3 id="stat-total-scans" class="text-2xl font-bold text-slate-900">0</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Events List Header -->
+      <div class="flex items-center justify-between pt-4">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900">Client Orders & Events</h2>
+          <p class="text-sm text-slate-500">Manage albums, upload photos by day, and share QR codes with clients.</p>
+        </div>
+        <button onclick="fetchEvents()" class="p-2 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-all" title="Refresh">
+          <i data-lucide="rotate-cw" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Events Grid Container -->
+      <div id="events-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Dynamically injected via JavaScript -->
+        <div class="col-span-full py-12 text-center text-slate-400">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-brand-500 border-t-transparent mb-3"></div>
+          <p>Loading events...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- VIEW 2: CLIENT FACE SCAN PORTAL -->
+    <!-- ======================================================== -->
+    <section id="view-client" class="space-y-8 hidden">
+      <!-- Client Event Header Banner -->
+      <div id="client-event-header" class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="flex items-center space-x-5">
+          <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-brand-600 to-pink-500 flex items-center justify-center text-white shadow-lg">
+            <i data-lucide="sparkles" class="w-8 h-8"></i>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span id="client-event-studio" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700">Studio Pro</span>
+              <span class="text-xs text-slate-400">• Multi-Day Wedding Gallery</span>
+            </div>
+            <h2 id="client-event-title" class="text-2xl sm:text-3xl font-black text-slate-900 mt-1">Aman & Sneha's Grand Wedding</h2>
+            <p id="client-event-meta" class="text-sm text-slate-500 mt-1">04-06 September 2026 • The Grand Palace, Udaipur</p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-3 w-full md:w-auto">
+          <button onclick="triggerSelfieScan()" class="w-full md:w-auto px-6 py-3.5 rounded-xl bg-gradient-to-r from-brand-600 to-accent-600 hover:from-brand-500 hover:to-accent-500 text-white font-bold text-sm shadow-lg shadow-brand-500/25 transition-all flex items-center justify-center">
+            <i data-lucide="camera" class="w-5 h-5 mr-2"></i> Scan My Face to Find Photos
+          </button>
+        </div>
+      </div>
+
+      <!-- Selfie Scanner Panel (Interactive Camera Box) -->
+      <div id="selfie-scanner-box" class="bg-slate-900 rounded-3xl p-6 sm:p-10 text-white shadow-2xl relative overflow-hidden hidden">
+        <div class="max-w-xl mx-auto text-center space-y-6">
+          <div>
+            <h3 class="text-2xl font-bold tracking-tight">Live Face Scanner</h3>
+            <p class="text-slate-400 text-sm mt-1">Apna chehra camera ke frame me rakhein taaki AI Day 1 se last day tak ki photos dhoondh sake.</p>
+          </div>
+
+          <!-- Video Camera Frame -->
+          <div class="relative w-72 h-72 sm:w-80 sm:h-80 mx-auto rounded-full overflow-hidden border-4 border-brand-500 shadow-2xl shadow-brand-500/30 bg-black">
+            <video id="webcam-video" autoplay playsinline class="w-full h-full object-cover transform -scale-x-100"></video>
+            <!-- Face guideline oval overlay -->
+            <div class="absolute inset-4 rounded-full border-2 border-dashed border-white/50 pointer-events-none animate-pulse-ring"></div>
+            <!-- Countdown overlay -->
+            <div id="camera-countdown" class="absolute inset-0 flex items-center justify-center text-6xl font-black text-white bg-black/40 hidden">3</div>
+          </div>
+
+          <canvas id="selfie-canvas" class="hidden"></canvas>
+
+          <!-- Camera Controls -->
+          <div class="flex flex-wrap items-center justify-center gap-4">
+            <button id="btn-snap" onclick="captureSelfieFromCamera()" class="px-8 py-3 rounded-full bg-brand-600 hover:bg-brand-500 font-bold text-sm shadow-lg shadow-brand-600/40 transition-all flex items-center">
+              <i data-lucide="aperture" class="w-5 h-5 mr-2"></i> Take Selfie & Search
+            </button>
+            <button onclick="stopCamera()" class="px-5 py-3 rounded-full bg-slate-800 hover:bg-slate-700 font-semibold text-sm transition-all">
+              Cancel
+            </button>
+          </div>
+
+          <div class="text-xs text-slate-400 flex items-center justify-center space-x-2">
+            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+            <span>Privacy Assured: Aapka chehra sirf photos match karne ke liye scan hota hai aur kahin store nahi hota.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alternative Upload Selfie Box -->
+      <div id="selfie-upload-card" class="bg-white border-2 border-dashed border-slate-300 rounded-3xl p-8 text-center space-y-4 max-w-2xl mx-auto shadow-sm">
+        <div class="w-16 h-16 rounded-full bg-brand-50 text-brand-600 mx-auto flex items-center justify-center">
+          <i data-lucide="smile" class="w-8 h-8"></i>
+        </div>
+        <div>
+          <h4 class="text-lg font-bold text-slate-900">Camera nahi chalana chahte?</h4>
+          <p class="text-sm text-slate-500 max-w-md mx-auto">Apni koi bhi ek clear selfie ya photo gallery se upload karke bhi poore event me se apni photos dhoondh sakte hain.</p>
+        </div>
+        <div class="flex items-center justify-center gap-3">
+          <button onclick="startCamera()" class="px-5 py-2.5 rounded-xl bg-slate-900 text-white font-semibold text-sm hover:bg-slate-800 transition-all flex items-center">
+            <i data-lucide="camera" class="w-4 h-4 mr-2"></i> Open Camera
+          </button>
+          <label class="px-5 py-2.5 rounded-xl bg-brand-600 text-white font-semibold text-sm hover:bg-brand-700 transition-all flex items-center cursor-pointer shadow-md shadow-brand-600/20">
+            <i data-lucide="upload" class="w-4 h-4 mr-2"></i> Upload Selfie File
+            <input type="file" accept="image/*" class="hidden" onchange="handleSelfieFileUpload(event)">
+          </label>
+        </div>
+      </div>
+
+      <!-- AI Searching Indicator (Animated) -->
+      <div id="searching-loader" class="text-center py-16 space-y-4 hidden">
+        <div class="relative w-20 h-20 mx-auto">
+          <div class="w-20 h-20 rounded-full border-4 border-brand-200 border-t-brand-600 animate-spin"></div>
+          <div class="absolute inset-0 flex items-center justify-center text-brand-600">
+            <i data-lucide="sparkles" class="w-8 h-8 animate-pulse"></i>
+          </div>
+        </div>
+        <h4 class="text-xl font-bold text-slate-900">Searching Photos with AI...</h4>
+        <p class="text-sm text-slate-500 max-w-md mx-auto">AI Day 1 se lekar last day tak ki sabhi photos me aapka chehra scan kar raha hai...</p>
+      </div>
+
+      <!-- Matched Results Section -->
+      <div id="matched-results-section" class="space-y-6 hidden">
+        <!-- Results Header Banner -->
+        <div class="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white">
+              <i data-lucide="check-circle-2" class="w-7 h-7"></i>
+            </div>
+            <div>
+              <span id="matched-count-badge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-white text-emerald-800 uppercase tracking-wide">18 Photos Found</span>
+              <h3 class="text-xl font-black mt-1">Ye Rahi Aapki Sabhi Photos!</h3>
+              <p class="text-emerald-100 text-xs sm:text-sm">Day 1 Haldi se lekar Final Wedding tak jahan aap dikhe hain.</p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-3 w-full sm:w-auto">
+            <button onclick="downloadAllMatchedZip()" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white text-emerald-800 hover:bg-emerald-50 font-bold text-sm shadow-md transition-all flex items-center justify-center">
+              <i data-lucide="download-cloud" class="w-4 h-4 mr-2"></i> Download All My Photos (.ZIP)
+            </button>
+          </div>
+        </div>
+
+        <!-- Day Filter Tabs -->
+        <div class="flex items-center space-x-2 overflow-x-auto pb-2" id="client-day-tabs">
+          <!-- Injected via JS -->
+        </div>
+
+        <!-- Photos Grid -->
+        <div id="matched-photos-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- VIEW 3: SAAS PRICING & SELLING TO PHOTOGRAPHERS -->
+    <!-- ======================================================== -->
+    <section id="view-pricing" class="space-y-12 hidden">
+      <div class="text-center max-w-3xl mx-auto space-y-4">
+        <span class="px-3 py-1 rounded-full bg-brand-100 text-brand-700 text-xs font-bold tracking-wider uppercase">B2B SaaS Business Model</span>
+        <h2 class="text-3xl sm:text-5xl font-black tracking-tight text-slate-900">
+          Sell to Wedding & Event Photographers
+        </h2>
+        <p class="text-slate-600 text-base sm:text-lg">
+          Photographers ko monthly ya annual subscription bechein. Photographers apne wedding clients ko direct QR code aur link denge, jisse aapko recurring software income milegi.
+        </p>
+      </div>
+
+      <!-- Pricing Cards Grid -->
+      <div id="pricing-cards-container" class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <!-- Dynamically injected via JS from /api/pricing -->
+      </div>
+
+      <!-- How to Sell to Photographers Guide -->
+      <div class="bg-white border border-slate-200 rounded-3xl p-8 max-w-4xl mx-auto space-y-6 shadow-sm">
+        <h3 class="text-xl font-bold text-slate-900 flex items-center">
+          <i data-lucide="lightbulb" class="w-6 h-6 text-amber-500 mr-2"></i> Aap Is Platform Ko Market Me Kaise Sell Kar Sakte Hain?
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-slate-600">
+          <div class="space-y-2">
+            <h4 class="font-bold text-slate-900 text-base">1. Photographers Ko Pitch:</h4>
+            <p>Photographers se kahein: <em>"Aapke client ko 5000 photos me se apni photo dhoondhne me ghanto lagte hain. Hamara AI software aapke clients ko sirf 1 second me unka face scan karke saari photos nikal kar de dega!"</em></p>
+          </div>
+          <div class="space-y-2">
+            <h4 class="font-bold text-slate-900 text-base">2. Watermark & Album Selection:</h4>
+            <p>Client photos me heart ❤️ dabakar physical album ke liye photos select kar sakta hai, jisse photographer ka album printing ka time 90% bach jata hai.</p>
+          </div>
+          <div class="space-y-2">
+            <h4 class="font-bold text-slate-900 text-base">3. Standee QR Code at Weddings:</h4>
+            <p>Photographer wedding hall ke reception entrance par QR code standee laga deta hai. Aane wale sabhi 500-1000 guests QR scan karke live photos paate hain.</p>
+          </div>
+          <div class="space-y-2">
+            <h4 class="font-bold text-slate-900 text-base">4. Zero Bandwidth Cost (Profit Margin 85%+):</h4>
+            <p>Cloudflare R2 storage integration ki wajah se high-res downloads par koi egress fee nahi lagti, jisse server cost minimum rehti hai aur profit maximum.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ======================================================== -->
+  <!-- MODAL 1: CREATE NEW EVENT ORDER -->
+  <!-- ======================================================== -->
+  <div id="modal-create-event" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div>
+          <h3 class="text-xl font-bold text-slate-900">Create New Event Order</h3>
+          <p class="text-xs text-slate-500">Add a wedding or event order for your client</p>
+        </div>
+        <button onclick="closeCreateEventModal()" class="p-2 text-slate-400 hover:text-slate-700 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="form-create-event" onsubmit="handleCreateEvent(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Event / Client Name</label>
+          <input id="new-event-title" type="text" required placeholder="e.g. Vikram & Ananya Wedding" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Studio / Photographer Name</label>
+            <input id="new-event-studio" type="text" placeholder="e.g. PixelCraft Studios" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Event Date</label>
+            <input id="new-event-date" type="text" placeholder="e.g. 15-18 Oct 2026" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Location / Venue</label>
+          <input id="new-event-location" type="text" placeholder="e.g. Grand Hyatt, Mumbai" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Watermark Protection (Optional)</label>
+          <input id="new-event-watermark" type="text" placeholder="e.g. PixelCraft Studios (Shown on previews)" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm">
+        </div>
+
+        <!-- Days / Functions Setup -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Event Days / Sub-functions</label>
+          <div id="event-days-inputs" class="space-y-2 text-sm">
+            <input type="text" value="Day 1 - Haldi & Mehendi" class="day-input w-full px-4 py-2 rounded-lg border border-slate-300 text-sm">
+            <input type="text" value="Day 2 - Sangeet Ceremony" class="day-input w-full px-4 py-2 rounded-lg border border-slate-300 text-sm">
+            <input type="text" value="Day 3 - Wedding & Reception" class="day-input w-full px-4 py-2 rounded-lg border border-slate-300 text-sm">
+          </div>
+        </div>
+
+        <div class="pt-4 flex items-center justify-end space-x-3">
+          <button type="button" onclick="closeCreateEventModal()" class="px-5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-semibold text-sm">Cancel</button>
+          <button type="submit" class="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-md shadow-brand-600/20">Create Event Order</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL 2: BULK PHOTO UPLOADER WITH PROGRESS -->
+  <!-- ======================================================== -->
+  <div id="modal-upload-photos" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div>
+          <h3 id="upload-modal-event-title" class="text-xl font-bold text-slate-900">Upload Photos</h3>
+          <p class="text-xs text-slate-500">AI will automatically detect and index all faces across these photos</p>
+        </div>
+        <button onclick="closeUploadModal()" class="p-2 text-slate-400 hover:text-slate-700 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Select Day / Function</label>
+          <select id="upload-day-select" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm bg-white font-medium">
+            <!-- Populated via JS -->
+          </select>
+        </div>
+
+        <!-- Dropzone -->
+        <div id="dropzone" class="border-2 border-dashed border-slate-300 hover:border-brand-500 rounded-2xl p-8 text-center space-y-3 cursor-pointer transition-colors bg-slate-50/50" onclick="document.getElementById('bulk-file-input').click()">
+          <div class="w-12 h-12 rounded-full bg-brand-50 text-brand-600 mx-auto flex items-center justify-center">
+            <i data-lucide="cloud-upload" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-slate-700">Click to select photos or drag & drop</p>
+            <p class="text-xs text-slate-400 mt-1">Supports JPG, PNG, WEBP (Multi-file bulk upload)</p>
+          </div>
+          <input id="bulk-file-input" type="file" multiple accept="image/*" class="hidden" onchange="handleBulkFilesSelected(event)">
+        </div>
+
+        <!-- Selected Files Preview & Count -->
+        <div id="upload-preview-container" class="hidden space-y-2">
+          <div class="flex items-center justify-between text-xs font-semibold text-slate-600">
+            <span id="selected-files-count">0 photos selected</span>
+            <button onclick="clearSelectedFiles()" class="text-red-500 hover:underline">Clear</button>
+          </div>
+          <div id="upload-progress-bar-container" class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden hidden">
+            <div id="upload-progress-bar" class="bg-gradient-to-r from-brand-600 to-accent-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+          <p id="upload-status-text" class="text-xs text-center text-slate-500 font-medium"></p>
+        </div>
+
+        <div class="pt-4 flex items-center justify-end space-x-3">
+          <button type="button" onclick="closeUploadModal()" class="px-5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-semibold text-sm">Close</button>
+          <button id="btn-start-upload" onclick="startBulkUpload()" disabled class="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-bold text-sm shadow-md shadow-brand-600/20 flex items-center">
+            <i data-lucide="upload" class="w-4 h-4 mr-2"></i> Start AI Indexing & Upload
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL 3: QR CODE & SHAREABLE LINK -->
+  <!-- ======================================================== -->
+  <div id="modal-share-qr" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl text-center">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-lg font-bold text-slate-900">Direct Client Link & QR Code</h3>
+        <button onclick="closeQrModal()" class="p-2 text-slate-400 hover:text-slate-700 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <!-- QR Code Image -->
+        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 inline-block shadow-inner">
+          <img id="qr-code-img" src="" alt="Client QR Code" class="w-56 h-56 mx-auto rounded-lg">
+        </div>
+
+        <div>
+          <h4 id="qr-event-title" class="font-bold text-slate-900 text-base">Aman & Sneha Wedding</h4>
+          <p class="text-xs text-slate-500 mt-1">Print this QR code on wedding cards, tables, or entry standees!</p>
+        </div>
+
+        <!-- Share URL Input -->
+        <div class="flex items-center space-x-2">
+          <input id="qr-client-url-input" type="text" readonly class="flex-1 px-3 py-2 text-xs bg-slate-100 border border-slate-200 rounded-xl text-slate-600 focus:outline-none">
+          <button onclick="copyClientLink()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center">
+            <i data-lucide="copy" class="w-3.5 h-3.5 mr-1"></i> Copy
+          </button>
+        </div>
+
+        <!-- Quick Share Buttons -->
+        <div class="grid grid-cols-3 gap-2 pt-2">
+          <a id="btn-share-whatsapp" href="#" target="_blank" class="px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center shadow-md shadow-emerald-600/20">
+            <i data-lucide="send" class="w-3.5 h-3.5 mr-1"></i> WhatsApp
+          </a>
+          <button onclick="downloadQrImage()" class="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center">
+            <i data-lucide="download" class="w-3.5 h-3.5 mr-1"></i> QR Image
+          </button>
+          <button onclick="printWeddingStandee()" class="px-3 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-accent-600 hover:from-brand-500 hover:to-accent-500 text-white font-bold text-xs flex items-center justify-center shadow-md">
+            <i data-lucide="printer" class="w-3.5 h-3.5 mr-1"></i> Print Standee
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL 4: LIGHTBOX PHOTO VIEWER -->
+  <!-- ======================================================== -->
+  <div id="modal-lightbox" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md hidden" onclick="closeLightbox(event)">
+    <div class="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center" onclick="event.stopPropagation()">
+      <button onclick="closeLightbox(event)" class="absolute -top-12 right-0 text-white/80 hover:text-white p-2">
+        <i data-lucide="x" class="w-7 h-7"></i>
+      </button>
+
+      <img id="lightbox-img" src="" alt="Full view" class="max-h-[75vh] w-auto rounded-2xl shadow-2xl object-contain">
+
+      <div class="mt-4 flex items-center justify-between w-full text-white px-2">
+        <div>
+          <p id="lightbox-day-tag" class="text-xs font-bold uppercase text-brand-400">Day 1 - Haldi</p>
+          <h4 id="lightbox-filename" class="text-sm font-semibold text-slate-200">photo.jpg</h4>
+        </div>
+        <div class="flex items-center space-x-3">
+          <button id="lightbox-btn-fav" onclick="toggleFavoriteCurrentPhoto()" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium text-xs backdrop-blur-md flex items-center">
+            <i data-lucide="heart" class="w-4 h-4 mr-1.5"></i> Select for Album
+          </button>
+          <a id="lightbox-btn-download" href="#" download class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs flex items-center shadow-lg shadow-brand-600/30">
+            <i data-lucide="download" class="w-4 h-4 mr-1.5"></i> Download Original High-Res
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL 5: BUY 1-YEAR SUBSCRIPTION PASS (₹1,000 PAYWALL) -->
+  <!-- ======================================================== -->
+  <div id="modal-subscription" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl relative overflow-hidden border border-brand-100">
+      <!-- Glow Accent -->
+      <div class="absolute -top-20 -right-20 w-48 h-48 bg-brand-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div>
+          <span class="px-2.5 py-0.5 rounded-full bg-brand-100 text-brand-700 text-xs font-black uppercase tracking-wider">Photographer License</span>
+          <h3 class="text-2xl font-black text-slate-900 mt-1">1-Year Studio Pass (₹1,000)</h3>
+        </div>
+        <button onclick="closeSubscriptionModal()" class="p-2 text-slate-400 hover:text-slate-700 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Plan Details Box -->
+      <div class="p-4 rounded-2xl bg-gradient-to-br from-brand-50 to-purple-50 border border-brand-200/60 space-y-3">
+        <div class="flex items-baseline justify-between">
+          <div>
+            <h4 class="font-bold text-slate-900 text-base">Full 1-Year Access (365 Din)</h4>
+            <p class="text-xs text-slate-500">Unlimited Weddings, AI Face Matches & QR Codes</p>
+          </div>
+          <div class="text-right">
+            <span class="text-3xl font-black text-brand-700">₹1,000</span>
+            <span class="text-xs text-slate-400 block font-medium">/ 1 Year</span>
+          </div>
+        </div>
+
+        <ul class="text-xs text-slate-600 space-y-1.5 pt-2 border-t border-brand-200/40">
+          <li class="flex items-center"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-600 mr-2"></i> Client orders upload karein (Haldi se lekar Wedding tak)</li>
+          <li class="flex items-center"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-600 mr-2"></i> Client 1 second me selfie scan karke saari photos payega</li>
+          <li class="flex items-center"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-600 mr-2"></i> Direct QR Code Standee generator client delivery ke liye</li>
+        </ul>
+      </div>
+
+      <!-- Activation Tabs / Form -->
+      <div class="space-y-4">
+        <!-- Option 1: Enter License Key -->
+        <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-3">
+          <label class="block text-xs font-bold text-slate-700 uppercase">Aapke Paas 1-Year License Key Hai?</label>
+          <div class="flex space-x-2">
+            <input id="sub-license-input" type="text" placeholder="e.g. SNAP-YEAR-4999-DEMO" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm uppercase font-mono font-bold tracking-wider">
+            <button onclick="handleActivateLicenseKey()" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-md shadow-brand-600/20 transition-all flex items-center">
+              Activate
+            </button>
+          </div>
+          <p class="text-[11px] text-slate-400">💡 <em>Testing Demo Key: <span class="font-mono font-bold text-slate-600 cursor-pointer select-all" onclick="document.getElementById('sub-license-input').value='SNAP-YEAR-4999-DEMO'">SNAP-YEAR-4999-DEMO</span> (Click to use)</em></p>
+        </div>
+
+        <!-- Option 2: Buy from Admin (Payment Details) -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200 space-y-3">
+          <div class="flex items-center justify-between">
+            <h5 class="text-xs font-bold text-slate-900 uppercase">License Key Kaise Buy Karein?</h5>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Instant Activation</span>
+          </div>
+          <p class="text-xs text-slate-500">
+            Niche diye gaye UPI par <strong>₹4,999</strong> transfer karein aur WhatsApp par screenshot bhejkar turant apni 1-Year License Key paayein:
+          </p>
+
+          <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 flex flex-col items-center text-center space-y-3">
+            <div class="p-2 bg-white rounded-xl border border-slate-200 shadow-sm inline-block">
+              <img id="sub-upi-qr" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi%3A%2F%2Fpay%3Fpa%3D8669173204%40upi%26pn%3DPhoto%20AI%20Studio%26am%3D4999%26cu%3DINR" alt="Pay 4999 via UPI" class="w-36 h-36 rounded-lg mx-auto">
+            </div>
+            <div>
+              <p class="text-[11px] text-slate-500">Scan with GPay / PhonePe / Paytm to Pay ₹4,999</p>
+              <div class="flex items-center justify-center space-x-2 mt-1">
+                <span id="sub-seller-upi" class="font-black text-slate-900 font-mono text-sm bg-white px-3 py-1 rounded-lg border border-slate-200 select-all">8669173204@upi</span>
+                <button onclick="copySellerUpi()" class="px-3 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-all">
+                  Copy
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <a id="btn-whatsapp-buy" href="https://api.whatsapp.com/send?phone=918669173204&text=Hi,%20I%20want%20to%20buy%20the%201-Year%20Photo%20AI%20Plan%20for%20Rs.4999" target="_blank" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center shadow-md shadow-emerald-600/20 transition-all">
+            <i data-lucide="message-circle" class="w-4 h-4 mr-1.5"></i> Buy / Send Screenshot on WhatsApp (+91 8669173204)
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL 6: SUPER ADMIN LICENSE KEY GENERATOR (FOR YOU) -->
+  <!-- ======================================================== -->
+  <div id="modal-admin-keys" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl relative border border-slate-200 text-center">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center">
+            <i data-lucide="shield-check" class="w-5 h-5"></i>
+          </div>
+          <h3 class="text-lg font-bold text-slate-900">Admin: License Generator</h3>
+        </div>
+        <button onclick="closeAdminKeyModal()" class="p-2 text-slate-400 hover:text-slate-700 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-left">
+        <p class="text-xs text-slate-600">
+          Yeh panel <strong>sirf aapke liye</strong> hai. Jab koi photographer aapko <strong>₹4,999</strong> dega, tab aap yahan click karke ek 1-Year License Key generate karenge aur use WhatsApp par bhejenge.
+        </p>
+
+        <!-- Generate Button -->
+        <button onclick="handleGenerateNewKey()" class="w-full py-3 rounded-xl bg-gradient-to-r from-brand-600 to-accent-600 hover:from-brand-500 hover:to-accent-500 text-white font-bold text-sm shadow-lg shadow-brand-600/20 transition-all flex items-center justify-center">
+          <i data-lucide="key" class="w-4 h-4 mr-2"></i> Generate New ₹4,999 Key
+        </button>
+
+        <!-- Newly Generated Key Box -->
+        <div id="new-key-display-box" class="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 hidden space-y-2 text-center">
+          <span class="text-[10px] font-bold text-emerald-800 uppercase tracking-wide">New License Key Created</span>
+          <div class="flex items-center justify-center space-x-2">
+            <span id="generated-key-text" class="text-base font-black font-mono text-emerald-950 select-all">SNAP-XXXX-XXXX-4999</span>
+            <button onclick="copyGeneratedKey()" class="p-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-all" title="Copy Key">
+              <i data-lucide="copy" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <p class="text-[11px] text-emerald-700">Ise copy karke photographer ko WhatsApp par bhej dein!</p>
+        </div>
+
+        <!-- Pre-existing Ready Keys -->
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5 text-xs">
+          <span class="font-bold text-slate-700 block">Pre-generated Ready Keys (365 Days):</span>
+          <div class="font-mono text-[11px] text-slate-600 space-y-1">
+            <div class="flex justify-between items-center py-0.5 border-b border-slate-200/60">
+              <span>SNAP-YEAR-4999-DEMO</span>
+              <button onclick="navigator.clipboard.writeText('SNAP-YEAR-4999-DEMO'); showToast('Copied demo key!');" class="text-brand-600 font-bold hover:underline">Copy</button>
+            </div>
+            <div class="flex justify-between items-center py-0.5 border-b border-slate-200/60">
+              <span>SNAP-YEAR-4999-PRO1</span>
+              <button onclick="navigator.clipboard.writeText('SNAP-YEAR-4999-PRO1'); showToast('Copied PRO1 key!');" class="text-brand-600 font-bold hover:underline">Copy</button>
+            </div>
+            <div class="flex justify-between items-center py-0.5">
+              <span>SNAP-YEAR-4999-PRO2</span>
+              <button onclick="navigator.clipboard.writeText('SNAP-YEAR-4999-PRO2'); showToast('Copied PRO2 key!');" class="text-brand-600 font-bold hover:underline">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL 7: SHARE WITH PHOTOGRAPHERS (WHATSAPP PITCH & DEMO) -->
+  <!-- ======================================================== -->
+  <div id="modal-share-pitch" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md hidden">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-5 shadow-2xl relative border border-slate-200">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+            <i data-lucide="send" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-slate-900">Photographers Ko Reference Link Bhejein</h3>
+            <p class="text-xs text-slate-500">Demo dikha kar 1-Year Plan (₹4,999) sell karne ke liye</p>
+          </div>
+        </div>
+        <button onclick="closeSharePitchModal()" class="p-2 text-slate-400 hover:text-slate-700 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <!-- Live Public Demo Link -->
+        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+          <span class="font-bold text-slate-700 uppercase tracking-wide text-[11px]">1. Live Public Demo Link (For Photographers to test):</span>
+          <div class="flex space-x-2">
+            <input id="pitch-public-url" type="text" readonly value="https://matthew-spring-controls-hands.trycloudflare.com/event/evt_5a538daa" class="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-700 font-mono text-xs select-all">
+            <button onclick="copyPitchUrl()" class="px-4 py-2 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-all flex items-center">
+              <i data-lucide="copy" class="w-3.5 h-3.5 mr-1"></i> Copy Link
+            </button>
+          </div>
+          <p class="text-[10px] text-slate-400">Yeh link koi bhi photographer apne mobile me khol kar live face scan test kar sakta hai!</p>
+        </div>
+
+        <!-- Pre-written WhatsApp Pitch -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-700 uppercase tracking-wide text-[11px]">2. Ready-to-Send WhatsApp Message:</span>
+            <span class="text-[10px] text-emerald-600 font-bold">100% High Conversion Pitch</span>
+          </div>
+          <textarea id="pitch-whatsapp-text" rows="8" readonly class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-[11px] text-slate-800 leading-relaxed select-all">📸 *Wedding & Event Photographers ke liye AI Smart Photo Sharing Software!* 🚀
+
+Kya aapke wedding clients ko 3,000–5,000 photos me apni photo dhoondhne me ghanto lagte hain?
+
+Ab aap apne clients ko direct QR Code aur link de sakte hain:
+✨ *Client sirf apna Face Scan (Selfie) karega* aur Day 1 (Haldi) se lekar last day tak ki uski saari photos 1 second me mil jayengi!
+
+👉 *Live Demo Link check karein:*
+https://matthew-spring-controls-hands.trycloudflare.com/event/evt_5a538daa
+*(Apna chehra scan karke dekhein AI kaise turant photos dhoondhta hai!)*
+
+🔥 *Special Offer for Photographers:*
+Pura 1 Saal (365 Days) Unlimited Weddings ke liye — *Sirf ₹4,999!*
+
+✅ Unlimited Events & Photos
+✅ Wedding Hall Standee & QR Code Generator
+✅ Client Single-Click ZIP Downloads
+✅ Watermark & Album Selection (❤️ Favorites)
+
+💳 UPI Payment: 8669173204@upi
+Buy karne ke liye abhi WhatsApp karein: +91 8669173204</textarea>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-2 gap-3 pt-1">
+          <button onclick="copyPitchText()" class="py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center transition-all">
+            <i data-lucide="copy" class="w-4 h-4 mr-1.5"></i> Copy WhatsApp Message
+          </button>
+          <button onclick="sharePitchDirectWhatsApp()" class="py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center shadow-md shadow-emerald-600/25 transition-all">
+            <i data-lucide="send" class="w-4 h-4 mr-1.5"></i> Share on WhatsApp
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 text-sm font-medium border border-slate-800">
+    <i id="toast-icon" data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>
+    <span id="toast-message">Notification</span>
+  </div>
+
+  <!-- Frontend App Script -->
+  <script src="/app.js"></script>
+</body>
+</html>
