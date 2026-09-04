@@ -1070,7 +1070,7 @@ function copyGeneratedKey() {
 function openSharePitchModal() {
   const currentOrigin = window.location.origin;
   const demoEventId = (eventsList && eventsList.length > 0) ? eventsList[0].id : 'evt_5a538daa';
-  const defaultTunnel = 'https://matthew-spring-controls-hands.trycloudflare.com';
+  const defaultTunnel = 'https://screens-wrapped-vol-representative.trycloudflare.com';
   const activeBase = (currentOrigin.includes('localhost') || currentOrigin.includes('127.0.0.1'))
     ? defaultTunnel
     : currentOrigin;
