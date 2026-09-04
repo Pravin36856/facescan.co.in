@@ -255,7 +255,7 @@ async function handleCreateEvent(e) {
 
 function checkAndOpenCreateEventModal() {
   if (!subscriptionData || !subscriptionData.is_active) {
-    showToast('Naya order banane ke liye 1-Year Plan (₹1,000) zaroori hai!', true);
+    showToast('Naya order banane ke liye 1-Year Plan (₹4,999) zaroori hai!', true);
     openSubscriptionModal();
     return;
   }
@@ -266,7 +266,7 @@ let targetUploadEventId = null;
 
 async function openUploadModal(eventId) {
   if (!subscriptionData || !subscriptionData.is_active) {
-    showToast('Photos upload karne ke liye 1-Year Plan (₹1,000) activate karein!', true);
+    showToast('Photos upload karne ke liye 1-Year Plan (₹4,999) activate karein!', true);
     openSubscriptionModal();
     return;
   }
@@ -1009,9 +1009,29 @@ function copySellerUpi() {
 
 // ----------------- SUPER ADMIN LICENSE GENERATOR (FOR SELLER) -----------------
 
+const ADMIN_SECRET_PIN = "8669";
+
+function promptAdminPin() {
+  const enteredPin = prompt("🔒 Admin Security PIN enter karein:");
+  if (enteredPin === null) return;
+
+  if (enteredPin.trim() === ADMIN_SECRET_PIN) {
+    sessionStorage.setItem('facescan_admin_auth', 'true');
+    document.getElementById('modal-admin-keys').classList.remove('hidden');
+    if (window.lucide) lucide.createIcons();
+    showToast("Admin Verified Successfully! 🔑");
+  } else {
+    showToast("Galat Admin PIN! Access Denied.", true);
+  }
+}
+
 function openAdminKeyModal() {
-  document.getElementById('modal-admin-keys').classList.remove('hidden');
-  if (window.lucide) lucide.createIcons();
+  if (sessionStorage.getItem('facescan_admin_auth') === 'true') {
+    document.getElementById('modal-admin-keys').classList.remove('hidden');
+    if (window.lucide) lucide.createIcons();
+  } else {
+    promptAdminPin();
+  }
 }
 
 function closeAdminKeyModal() {
@@ -1108,5 +1128,15 @@ function sharePitchDirectWhatsApp() {
   const text = document.getElementById('pitch-whatsapp-text').value;
   const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
   window.open(waUrl, '_blank');
+}
+
+// ----------------- ADMIN HASH & SECRET ACCESS -----------------
+window.addEventListener('hashchange', () => {
+  if (window.location.hash === '#admin') {
+    promptAdminPin();
+  }
+});
+if (window.location.hash === '#admin') {
+  setTimeout(promptAdminPin, 500);
 }
 
