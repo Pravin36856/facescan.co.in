@@ -1,0 +1,41 @@
+﻿{
+  "packageId": "in.co.facescan.twa",
+  "host": "facescan.co.in",
+  "name": "FaceScan AI - Smart Wedding Photo Sharing",
+  "launcherName": "FaceScan AI",
+  "themeColor": "#C026D3",
+  "navigationColor": "#0F172A",
+  "backgroundColor": "#0F172A",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://facescan.co.in/icons/icon-512.png",
+  "maskableIconUrl": "https://facescan.co.in/icons/icon-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [
+    {
+      "name": "Scan My Face",
+      "shortName": "Face Scan",
+      "url": "/#client",
+      "icon": "https://facescan.co.in/icons/icon-192.png"
+    },
+    {
+      "name": "Photographer Studio",
+      "shortName": "Studio",
+      "url": "/#dashboard",
+      "icon": "https://facescan.co.in/icons/icon-192.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://facescan.co.in/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {
+    "playBilling": {
+      "enabled": false
+    }
+  },
+  "alphaDependencies": {
+    "enabled": false
+  }
+}

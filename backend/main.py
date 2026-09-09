@@ -1,6 +1,6 @@
 import os
 import io
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Query, Request
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Query, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
@@ -12,6 +12,7 @@ from services.face_service import FaceRecognitionEngine
 from services.storage_service import StorageService
 from services.event_service import EventService
 from services.subscription_service import SubscriptionService
+from services.auth_service import AuthService
 from services.seed_service import seed_sample_event_if_empty
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -26,6 +27,7 @@ face_engine = FaceRecognitionEngine(MODELS_DIR)
 storage_service = StorageService(UPLOADS_DIR)
 event_service = EventService(os.path.join(DATA_DIR, "events.json"))
 subscription_service = SubscriptionService(os.path.join(DATA_DIR, "subscription.json"))
+auth_service = AuthService(os.path.join(DATA_DIR, "users.json"), subscription_service)
 
 # Automatically seed sample event if empty
 seed_sample_event_if_empty(event_service, storage_service, face_engine)
@@ -76,6 +78,22 @@ class UpdateSellerRequest(BaseModel):
     upi_id: str
     seller_contact: str
 
+class SendOtpRequest(BaseModel):
+    identifier: str
+    studio_name: str = ""
+
+class VerifyOtpRequest(BaseModel):
+    identifier: str
+    otp: str
+
+class ActivateCustomerKeyRequest(BaseModel):
+    token: str
+    key: str
+
+class AdminApproveCustomerRequest(BaseModel):
+    admin_pin: str
+    user_id: str
+
 # ----------------- API ROUTES -----------------
 
 @app.get("/api/health")
@@ -85,6 +103,56 @@ def health_check():
         "service": "AI Face Recognition Photo Delivery Platform",
         "total_events": len(event_service.list_events())
     }
+
+# ----------------- AUTHENTICATION & CUSTOMER REGISTRATION -----------------
+
+@app.post("/api/auth/send-otp")
+def send_otp_endpoint(req: SendOtpRequest):
+    return auth_service.send_otp(req.identifier, req.studio_name)
+
+@app.post("/api/auth/verify-otp")
+def verify_otp_endpoint(req: VerifyOtpRequest):
+    res = auth_service.verify_otp(req.identifier, req.otp)
+    if not res.get("success"):
+        raise HTTPException(status_code=400, detail=res.get("message"))
+    return res
+
+@app.post("/api/auth/activate")
+def activate_customer_key_endpoint(req: ActivateCustomerKeyRequest):
+    res = auth_service.activate_user_with_key(req.token, req.key)
+    if not res.get("success"):
+        raise HTTPException(status_code=400, detail=res.get("message"))
+    return res
+
+@app.get("/api/auth/me")
+def get_current_user_endpoint(token: Optional[str] = None, authorization: Optional[str] = Header(None)):
+    auth_token = token
+    if not auth_token and authorization:
+        auth_token = authorization.replace("Bearer ", "").strip()
+    if not auth_token:
+        return {"authenticated": False}
+    user = auth_service.get_user_by_token(auth_token)
+    if not user:
+        return {"authenticated": False}
+    return {
+        "authenticated": True,
+        "user": user
+    }
+
+@app.get("/api/admin/users")
+def get_admin_users_endpoint(admin_pin: str):
+    if admin_pin.strip() != "8669":
+        raise HTTPException(status_code=403, detail="Invalid Admin PIN. Access Denied.")
+    return auth_service.list_all_users()
+
+@app.post("/api/admin/approve-user")
+def approve_admin_user_endpoint(req: AdminApproveCustomerRequest):
+    if req.admin_pin.strip() != "8669":
+        raise HTTPException(status_code=403, detail="Invalid Admin PIN. Access Denied.")
+    res = auth_service.admin_approve_user(req.user_id)
+    if not res.get("success"):
+        raise HTTPException(status_code=400, detail=res.get("message"))
+    return res
 
 # Subscription / Paywall Endpoints
 @app.get("/api/subscription/status")
@@ -397,6 +465,29 @@ def serve_client_portal(event_id: str):
             content = f.read()
         return HTMLResponse(content)
     return HTMLResponse("<h1>Client Portal Loading...</h1>")
+
+# ----------------- PWA & ANDROID TWA ROUTES -----------------
+
+@app.get("/manifest.json")
+def get_pwa_manifest():
+    manifest_path = os.path.join(FRONTEND_DIR, "manifest.json")
+    if os.path.exists(manifest_path):
+        return FileResponse(manifest_path, media_type="application/manifest+json")
+    raise HTTPException(status_code=404, detail="Manifest not found")
+
+@app.get("/service-worker.js")
+def get_pwa_service_worker():
+    sw_path = os.path.join(FRONTEND_DIR, "service-worker.js")
+    if os.path.exists(sw_path):
+        return FileResponse(sw_path, media_type="application/javascript")
+    raise HTTPException(status_code=404, detail="Service worker not found")
+
+@app.get("/.well-known/assetlinks.json")
+def get_assetlinks():
+    al_path = os.path.join(FRONTEND_DIR, ".well-known", "assetlinks.json")
+    if os.path.exists(al_path):
+        return FileResponse(al_path, media_type="application/json")
+    return JSONResponse(content=[])
 
 app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
 

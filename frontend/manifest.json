@@ -1,0 +1,33 @@
+﻿{
+  "name": "FaceScan AI - Smart Wedding Photo Sharing",
+  "short_name": "FaceScan AI",
+  "description": "AI Facial Recognition Photo Delivery & Sharing Platform for Wedding & Event Photographers",
+  "start_url": "/",
+  "id": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#c026d3",
+  "categories": ["photography", "business", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

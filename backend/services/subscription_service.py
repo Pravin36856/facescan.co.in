@@ -29,7 +29,7 @@ class SubscriptionService:
     def _load(self):
         if os.path.exists(self.data_file):
             try:
-                with open(self.data_file, "r", encoding="utf-8") as f:
+                with open(self.data_file, "r", encoding="utf-8-sig") as f:
                     self.state.update(json.load(f))
             except Exception as e:
                 print(f"Error loading subscription data: {e}")

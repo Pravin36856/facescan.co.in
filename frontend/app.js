@@ -11,11 +11,20 @@ let cameraStream = null;
 let selectedBulkFiles = [];
 let currentLightboxPhoto = null;
 let albumFavorites = new Set(JSON.parse(localStorage.getItem('facesnap_favorites') || '[]'));
+let currentUser = null;
+let deferredPrompt = null;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
   // Initialize Lucide icons
   if (window.lucide) lucide.createIcons();
+
+  // Register PWA Service Worker
+  if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+    navigator.serviceWorker.register('/service-worker.js').catch(err => {
+      console.log('SW registration note:', err);
+    });
+  }
 
   // Check URL path: if `/event/evt_xxx`, switch directly to client view
   const eventMatch = window.location.pathname.match(/\/event\/([a-zA-Z0-9_\-]+)/);
@@ -23,11 +32,37 @@ document.addEventListener('DOMContentLoaded', () => {
     const eventId = eventMatch[1];
     loadClientViewForEvent(eventId);
   } else {
+    fetchCurrentUser();
     fetchSubscriptionStatus();
     fetchEvents();
     fetchPricing();
   }
 });
+
+// PWA Install Prompt Listener
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const pwaBtn = document.getElementById('btn-pwa-install');
+  if (pwaBtn) pwaBtn.classList.remove('hidden');
+});
+
+function triggerPwaInstall() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choice) => {
+      if (choice.outcome === 'accepted') {
+        showToast('FaceScan App Installed! 📲');
+      }
+      deferredPrompt = null;
+      const pwaBtn = document.getElementById('btn-pwa-install');
+      if (pwaBtn) pwaBtn.classList.add('hidden');
+    });
+  } else {
+    showToast('Browser menu me "Install / Add to Home Screen" select karein 📲');
+  }
+}
+
 
 // ----------------- NAVIGATION & VIEWS -----------------
 
@@ -1018,6 +1053,7 @@ function promptAdminPin() {
   if (enteredPin.trim() === ADMIN_SECRET_PIN) {
     sessionStorage.setItem('facescan_admin_auth', 'true');
     document.getElementById('modal-admin-keys').classList.remove('hidden');
+    fetchAdminUserList();
     if (window.lucide) lucide.createIcons();
     showToast("Admin Verified Successfully! 🔑");
   } else {
@@ -1028,6 +1064,7 @@ function promptAdminPin() {
 function openAdminKeyModal() {
   if (sessionStorage.getItem('facescan_admin_auth') === 'true') {
     document.getElementById('modal-admin-keys').classList.remove('hidden');
+    fetchAdminUserList();
     if (window.lucide) lucide.createIcons();
   } else {
     promptAdminPin();
@@ -1063,6 +1100,363 @@ function copyGeneratedKey() {
   const key = document.getElementById('generated-key-text').innerText;
   navigator.clipboard.writeText(key);
   showToast('License Key copied! Send to photographer on WhatsApp.');
+}
+
+// ----------------- ADMIN PHOTOGRAPHER MANAGEMENT TABS -----------------
+
+function switchAdminTab(tab) {
+  const keysTab = document.getElementById('admin-tab-keys');
+  const usersTab = document.getElementById('admin-tab-users');
+  const keysBtn = document.getElementById('admin-tab-keys-btn');
+  const usersBtn = document.getElementById('admin-tab-users-btn');
+
+  if (tab === 'keys') {
+    keysTab.classList.remove('hidden');
+    usersTab.classList.add('hidden');
+    keysBtn.className = "pb-2 text-xs font-bold border-b-2 border-brand-600 text-brand-700";
+    usersBtn.className = "pb-2 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800";
+  } else {
+    keysTab.classList.add('hidden');
+    usersTab.classList.remove('hidden');
+    keysBtn.className = "pb-2 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800";
+    usersBtn.className = "pb-2 text-xs font-bold border-b-2 border-brand-600 text-brand-700";
+    fetchAdminUserList();
+  }
+  if (window.lucide) lucide.createIcons();
+}
+
+async function fetchAdminUserList() {
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/users?admin_pin=8669`);
+    if (!res.ok) throw new Error('Failed to fetch admin users');
+    const users = await res.json();
+
+    const tbody = document.getElementById('admin-user-table-body');
+    const countEl = document.getElementById('admin-user-count');
+    if (countEl) countEl.innerText = users.length;
+
+    if (!tbody) return;
+
+    if (!users || users.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">Abhi koi photographer customer register nahi hua hai.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = users.map(u => {
+      const dateStr = u.created_at ? new Date(u.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 'Recent';
+      const statusBadge = u.is_paid
+        ? `<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">🟢 Active (${u.days_left || 365}d)</span>`
+        : `<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px]">🟡 Unpaid</span>`;
+
+      const actionBtn = u.is_paid
+        ? `<span class="text-[11px] text-emerald-700 font-bold">Key: ${u.license_key || 'ACTIVE'}</span>`
+        : `<button onclick="handleAdminApproveUser('${u.id}', '${u.identifier}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all">✅ Approve ₹4,999</button>`;
+
+      return `
+        <tr class="hover:bg-slate-50 transition-colors">
+          <td class="p-2.5 font-bold text-slate-800">${u.studio_name || 'Photographer Studio'}<div class="text-[10px] text-slate-400 font-normal">Reg: ${dateStr}</div></td>
+          <td class="p-2.5 font-mono text-slate-600">${u.identifier}</td>
+          <td class="p-2.5">${statusBadge}</td>
+          <td class="p-2.5 text-right">${actionBtn}</td>
+        </tr>
+      `;
+    }).join('');
+
+    if (window.lucide) lucide.createIcons();
+  } catch (err) {
+    console.error('fetchAdminUserList error:', err);
+  }
+}
+
+async function handleAdminApproveUser(userId, identifier) {
+  if (!confirm(`Kya aap ${identifier} ko 1-Year Pass ke liye Approve karna chahte hain?`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/approve-user`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ admin_pin: '8669', user_id: userId })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      showToast(data.detail || data.message || 'Failed to approve user', true);
+      return;
+    }
+
+    showToast(`Photographer ${identifier} approved for 365 Days! 🎉`);
+    fetchAdminUserList();
+  } catch (err) {
+    console.error(err);
+    showToast('Admin approval failed', true);
+  }
+}
+
+// ----------------- CUSTOMER AUTHENTICATION & LOGIN -----------------
+
+async function fetchCurrentUser() {
+  const token = localStorage.getItem('facescan_token');
+  if (!token) {
+    updateAuthUi(null);
+    return;
+  }
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/me?token=${encodeURIComponent(token)}`);
+    const data = await res.json();
+    if (res.ok && data.authenticated && data.user) {
+      currentUser = data.user;
+      updateAuthUi(currentUser);
+    } else {
+      localStorage.removeItem('facescan_token');
+      updateAuthUi(null);
+    }
+  } catch (err) {
+    console.error('fetchCurrentUser error:', err);
+  }
+}
+
+function updateAuthUi(user) {
+  const loginBtn = document.getElementById('btn-nav-login');
+  const userProfile = document.getElementById('nav-user-profile');
+  const studioNameEl = document.getElementById('nav-user-studio');
+  const userStatusEl = document.getElementById('nav-user-status');
+  const badge = document.getElementById('nav-sub-badge');
+  const badgeText = document.getElementById('nav-sub-text');
+
+  if (user) {
+    if (loginBtn) loginBtn.classList.add('hidden');
+    if (userProfile) {
+      userProfile.classList.remove('hidden');
+      userProfile.classList.add('inline-flex');
+    }
+    if (studioNameEl) studioNameEl.innerText = user.studio_name || 'My Studio';
+    if (userStatusEl) {
+      if (user.is_paid) {
+        userStatusEl.innerText = `Active (${user.days_left || 365}d)`;
+        userStatusEl.className = "text-[10px] font-semibold text-emerald-600";
+        userStatusEl.onclick = null;
+      } else {
+        userStatusEl.innerText = `Unpaid (Activate)`;
+        userStatusEl.className = "text-[10px] font-semibold text-amber-600 cursor-pointer underline";
+        userStatusEl.onclick = openCustomerPaywallModal;
+      }
+    }
+    if (badge && badgeText) {
+      if (user.is_paid) {
+        badge.className = "inline-flex items-center px-3 py-1.5 text-xs font-bold rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-all shadow-sm";
+        badgeText.innerHTML = `🟢 1-Year Active (${user.days_left || 365}d left)`;
+      } else {
+        badge.className = "inline-flex items-center px-3 py-1.5 text-xs font-bold rounded-xl bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-all shadow-sm";
+        badgeText.innerHTML = `🔒 1-Year Pass: Inactive (Buy ₹4,999)`;
+      }
+    }
+  } else {
+    if (loginBtn) loginBtn.classList.remove('hidden');
+    if (userProfile) {
+      userProfile.classList.add('hidden');
+      userProfile.classList.remove('inline-flex');
+    }
+  }
+  if (window.lucide) lucide.createIcons();
+}
+
+let tempDemoOtp = null;
+
+function openAuthModal() {
+  document.getElementById('modal-auth').classList.remove('hidden');
+  backToStep1();
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeAuthModal() {
+  document.getElementById('modal-auth').classList.add('hidden');
+}
+
+function backToStep1() {
+  document.getElementById('auth-step-1').classList.remove('hidden');
+  document.getElementById('auth-step-2').classList.add('hidden');
+  const demoBanner = document.getElementById('auth-demo-otp-banner');
+  if (demoBanner) demoBanner.classList.add('hidden');
+  const otpInp = document.getElementById('auth-otp-input');
+  if (otpInp) otpInp.value = '';
+}
+
+function fillDemoOtp() {
+  if (tempDemoOtp) {
+    document.getElementById('auth-otp-input').value = tempDemoOtp;
+  }
+}
+
+async function handleSendOtp() {
+  const identifierInput = document.getElementById('auth-identifier');
+  const studioInput = document.getElementById('auth-studio-name');
+  const identifier = identifierInput.value.trim();
+  const studioName = studioInput.value.trim();
+
+  if (!identifier) {
+    showToast('Kripya Mobile number ya Email enter karein', true);
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/send-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier, studio_name: studioName })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      showToast(data.message || data.detail || 'OTP bhejne me samasya aayi', true);
+      return;
+    }
+
+    document.getElementById('auth-display-target').innerText = identifier;
+    document.getElementById('auth-step-1').classList.add('hidden');
+    document.getElementById('auth-step-2').classList.remove('hidden');
+
+    if (data.demo_otp) {
+      tempDemoOtp = data.demo_otp;
+      document.getElementById('auth-demo-otp-val').innerText = data.demo_otp;
+      document.getElementById('auth-demo-otp-banner').classList.remove('hidden');
+    }
+
+    showToast(`OTP sent to ${identifier}! 📩`);
+    if (window.lucide) lucide.createIcons();
+  } catch (err) {
+    console.error(err);
+    showToast('Network error while sending OTP', true);
+  }
+}
+
+async function handleVerifyOtp() {
+  const identifier = document.getElementById('auth-identifier').value.trim();
+  const otp = document.getElementById('auth-otp-input').value.trim();
+
+  if (!otp) {
+    showToast('6-Digit OTP code enter karein', true);
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/verify-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier, otp })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      showToast(data.detail || data.message || 'Galat OTP code', true);
+      return;
+    }
+
+    currentUser = data.user;
+    localStorage.setItem('facescan_token', currentUser.token);
+    updateAuthUi(currentUser);
+    closeAuthModal();
+
+    if (!currentUser.is_paid) {
+      showToast(`Welcome ${currentUser.studio_name}! 1-Year Pass activate karein.`);
+      openCustomerPaywallModal();
+    } else {
+      showToast(`Welcome back, ${currentUser.studio_name}! 🎉`);
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('OTP verification error', true);
+  }
+}
+
+function handleLogout() {
+  localStorage.removeItem('facescan_token');
+  currentUser = null;
+  updateAuthUi(null);
+  showToast('Studio logged out successfully');
+}
+
+// ----------------- CUSTOMER PAYWALL & ACTIVATION -----------------
+
+function openCustomerPaywallModal() {
+  document.getElementById('modal-customer-paywall').classList.remove('hidden');
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeCustomerPaywallModal() {
+  document.getElementById('modal-customer-paywall').classList.add('hidden');
+}
+
+async function handleCustomerActivateKey() {
+  const token = localStorage.getItem('facescan_token');
+  if (!token) {
+    showToast('Pehle registration & login karein', true);
+    openAuthModal();
+    return;
+  }
+  const keyInput = document.getElementById('customer-license-key-input');
+  const key = keyInput.value.trim();
+  if (!key) {
+    showToast('Kripya 1-Year License Key enter karein', true);
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/activate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, key })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      showToast(data.detail || data.message || 'Invalid License Key', true);
+      return;
+    }
+
+    currentUser = data.user;
+    updateAuthUi(currentUser);
+    closeCustomerPaywallModal();
+    showToast('🎉 Badhaai ho! Aapka 1-Year Photographer Pass activate ho gaya!');
+    fetchSubscriptionStatus();
+  } catch (err) {
+    console.error(err);
+    showToast('License key activation failed', true);
+  }
+}
+
+async function checkCustomerAuthStatus(showFeedback = false) {
+  const token = localStorage.getItem('facescan_token');
+  if (!token) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/me?token=${encodeURIComponent(token)}`);
+    const data = await res.json();
+    if (res.ok && data.authenticated && data.user) {
+      currentUser = data.user;
+      updateAuthUi(currentUser);
+      if (currentUser.is_paid) {
+        closeCustomerPaywallModal();
+        showToast('🎉 Aapka account Pravin dwara approve ho gaya hai! Studio ready.');
+      } else if (showFeedback) {
+        showToast('Pravin ki taraf se abhi approval pending hai. Screenshot bhejein: +91 8669173204', true);
+      }
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// ----------------- GATED ORDER CREATION -----------------
+
+function checkAndOpenCreateEventModal() {
+  if (!currentUser) {
+    showToast('Wedding order upload karne ke liye pehle Login / Register karein', true);
+    openAuthModal();
+    return;
+  }
+  if (!currentUser.is_paid) {
+    showToast('Wedding order create karne ke liye 1-Year Pass (₹4,999) activate karein', true);
+    openCustomerPaywallModal();
+    return;
+  }
+  openCreateEventModal();
 }
 
 // ----------------- SHARE PITCH MODAL FOR PHOTOGRAPHERS -----------------
@@ -1139,4 +1533,5 @@ window.addEventListener('hashchange', () => {
 if (window.location.hash === '#admin') {
   setTimeout(promptAdminPin, 500);
 }
+
 

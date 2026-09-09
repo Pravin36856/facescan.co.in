@@ -2,8 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FaceSnap AI - Smart Photo Delivery Platform for Photographers</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FaceScan AI - Smart Photo Delivery Platform for Photographers</title>
+  <!-- PWA & Mobile Web App Meta -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#c026d3">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FaceScan AI">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -83,6 +91,29 @@
       </nav>
 
       <div class="flex items-center space-x-2 sm:space-x-3">
+        <!-- 📲 PWA Android / Mobile Install Button -->
+        <button id="btn-pwa-install" onclick="triggerPwaInstall()" class="hidden inline-flex items-center px-3 py-1.5 text-xs font-bold rounded-xl bg-gradient-to-r from-purple-600 to-brand-600 text-white shadow-md shadow-purple-600/25 hover:from-purple-500 hover:to-brand-500 transition-all">
+          <i data-lucide="smartphone" class="w-3.5 h-3.5 mr-1.5"></i>
+          <span>📲 Install App</span>
+        </button>
+
+        <!-- Customer Login / Register Button (Visible when logged out) -->
+        <button id="btn-nav-login" onclick="openAuthModal()" class="inline-flex items-center px-3 py-1.5 text-xs font-bold rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-sm">
+          <i data-lucide="log-in" class="w-3.5 h-3.5 mr-1.5 text-brand-400"></i>
+          <span>Studio Login / Register</span>
+        </button>
+
+        <!-- User Profile Pill (Visible when logged in) -->
+        <div id="nav-user-profile" class="hidden items-center space-x-2 bg-slate-100 p-1 pl-3 pr-1.5 rounded-xl border border-slate-200">
+          <div class="flex flex-col text-left">
+            <span id="nav-user-studio" class="text-xs font-bold text-slate-800 leading-tight">My Studio</span>
+            <span id="nav-user-status" class="text-[10px] font-semibold text-emerald-600">Active (365d)</span>
+          </div>
+          <button onclick="handleLogout()" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all" title="Logout">
+            <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+
         <!-- Subscription Status Badge -->
         <button id="nav-sub-badge" onclick="openSubscriptionModal()" class="inline-flex items-center px-3 py-1.5 text-xs font-bold rounded-xl bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-all shadow-sm">
           <i data-lucide="lock" class="w-3.5 h-3.5 mr-1.5 text-amber-600"></i>
@@ -652,25 +683,39 @@
   </div>
 
   <!-- ======================================================== -->
-  <!-- MODAL 6: SUPER ADMIN LICENSE KEY GENERATOR (FOR YOU) -->
+  <!-- MODAL 6: SUPER ADMIN PANEL (KEY GENERATOR & CUSTOMER APPROVAL) -->
   <!-- ======================================================== -->
   <div id="modal-admin-keys" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md hidden">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl relative border border-slate-200 text-center">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-5 shadow-2xl relative border border-slate-200">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
         <div class="flex items-center space-x-2">
           <div class="w-8 h-8 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center">
             <i data-lucide="shield-check" class="w-5 h-5"></i>
           </div>
-          <h3 class="text-lg font-bold text-slate-900">Admin: License Generator</h3>
+          <div>
+            <h3 class="text-lg font-bold text-slate-900">Admin Control Panel (Pravin Only)</h3>
+            <p class="text-xs text-slate-500">PIN: 8669 • Manage Photographers & License Keys</p>
+          </div>
         </div>
         <button onclick="closeAdminKeyModal()" class="p-2 text-slate-400 hover:text-slate-700 rounded-lg">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
-      <div class="space-y-4 text-left">
+      <!-- Admin Tabs -->
+      <div class="flex border-b border-slate-200 space-x-4">
+        <button id="admin-tab-keys-btn" onclick="switchAdminTab('keys')" class="pb-2 text-xs font-bold border-b-2 border-brand-600 text-brand-700">
+          <i data-lucide="key" class="w-3.5 h-3.5 inline mr-1"></i> 1-Year Key Generator
+        </button>
+        <button id="admin-tab-users-btn" onclick="switchAdminTab('users')" class="pb-2 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800">
+          <i data-lucide="users" class="w-3.5 h-3.5 inline mr-1"></i> Registered Photographers (<span id="admin-user-count">0</span>)
+        </button>
+      </div>
+
+      <!-- TAB 1: LICENSE KEY GENERATOR -->
+      <div id="admin-tab-keys" class="space-y-4 text-left">
         <p class="text-xs text-slate-600">
-          Yeh panel <strong>sirf aapke liye</strong> hai. Jab koi photographer aapko <strong>₹4,999</strong> dega, tab aap yahan click karke ek 1-Year License Key generate karenge aur use WhatsApp par bhejenge.
+          Jab koi photographer aapko <strong>₹4,999</strong> dega, tab aap yahan click karke ek 1-Year License Key generate karenge aur use WhatsApp par bhejenge.
         </p>
 
         <!-- Generate Button -->
@@ -708,6 +753,173 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- TAB 2: REGISTERED PHOTOGRAPHERS MANAGEMENT -->
+      <div id="admin-tab-users" class="space-y-3 text-left hidden">
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-slate-600">Jinhone mobile/email se register kiya hai unki list:</p>
+          <button onclick="fetchAdminUserList()" class="text-xs text-brand-600 hover:text-brand-800 font-bold flex items-center">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5 mr-1"></i> Refresh List
+          </button>
+        </div>
+
+        <div class="max-h-72 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200 sticky top-0">
+              <tr>
+                <th class="p-2.5">Photographer / Studio</th>
+                <th class="p-2.5">Mobile / Email</th>
+                <th class="p-2.5">Status</th>
+                <th class="p-2.5 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="admin-user-table-body" class="divide-y divide-slate-200 bg-white">
+              <tr>
+                <td colspan="4" class="p-4 text-center text-slate-400">Loading registered photographers...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL 8: PHOTOGRAPHER CUSTOMER REGISTRATION & OTP LOGIN -->
+  <!-- ======================================================== -->
+  <div id="modal-auth" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-5 shadow-2xl relative border border-slate-200">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center">
+            <i data-lucide="log-in" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-slate-900">Photographer Login / Register</h3>
+            <p class="text-xs text-slate-500">OTP verification ke saath secure access</p>
+          </div>
+        </div>
+        <button onclick="closeAuthModal()" class="p-2 text-slate-400 hover:text-slate-700 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Step 1: Phone / Email Input -->
+      <div id="auth-step-1" class="space-y-4 text-left">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Mobile Number ya Email ID *</label>
+          <div class="relative">
+            <i data-lucide="phone" class="w-4 h-4 absolute left-3 top-3.5 text-slate-400"></i>
+            <input id="auth-identifier" type="text" placeholder="e.g. 9876543210 ya name@gmail.com" class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Studio / Business Name (Optional)</label>
+          <div class="relative">
+            <i data-lucide="camera" class="w-4 h-4 absolute left-3 top-3.5 text-slate-400"></i>
+            <input id="auth-studio-name" type="text" placeholder="e.g. Royal Wedding Studio" class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm">
+          </div>
+        </div>
+
+        <button onclick="handleSendOtp()" class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-md shadow-brand-600/25 transition-all flex items-center justify-center">
+          <i data-lucide="send" class="w-4 h-4 mr-2"></i> Send OTP (Get 6-Digit Code)
+        </button>
+
+        <p class="text-[11px] text-slate-400 text-center">Naye users ka registration aur purane users ka login ek sath automatic hota hai.</p>
+      </div>
+
+      <!-- Step 2: OTP Verification Input -->
+      <div id="auth-step-2" class="space-y-4 text-left hidden">
+        <div class="p-3 bg-brand-50 rounded-2xl border border-brand-200/60 text-xs text-brand-900 flex items-center justify-between">
+          <div>
+            <span>OTP sent to: </span>
+            <strong id="auth-display-target" class="font-bold">9876543210</strong>
+          </div>
+          <button onclick="backToStep1()" class="text-[11px] text-brand-600 font-bold hover:underline">Change</button>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">6-Digit OTP Code Enter Karein *</label>
+          <input id="auth-otp-input" type="text" maxlength="6" placeholder="• • • • • •" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500 text-center text-xl font-mono tracking-widest font-black text-slate-800">
+        </div>
+
+        <div id="auth-demo-otp-banner" class="p-2.5 bg-emerald-50 rounded-xl border border-emerald-200 text-center hidden">
+          <p class="text-[11px] text-emerald-800">⚡ <strong>Auto Test OTP:</strong> <span id="auth-demo-otp-val" class="font-mono font-bold text-emerald-950 bg-white px-2 py-0.5 rounded border border-emerald-300">123456</span> <button onclick="fillDemoOtp()" class="ml-1 text-xs text-brand-600 font-bold underline">Auto-Fill</button></p>
+        </div>
+
+        <button onclick="handleVerifyOtp()" class="w-full py-3 rounded-xl bg-gradient-to-r from-brand-600 to-accent-600 hover:from-brand-500 hover:to-accent-500 text-white font-bold text-sm shadow-md shadow-brand-600/25 transition-all flex items-center justify-center">
+          <i data-lucide="check-circle" class="w-4 h-4 mr-2"></i> Verify OTP & Continue
+        </button>
+
+        <div class="flex items-center justify-between text-xs pt-1">
+          <button onclick="backToStep1()" class="text-slate-500 hover:text-slate-800">← Back</button>
+          <button onclick="handleSendOtp()" class="text-brand-600 font-bold hover:underline">Resend OTP</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL 9: CUSTOMER PAYWALL & LICENSE KEY ACTIVATION -->
+  <!-- ======================================================== -->
+  <div id="modal-customer-paywall" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl relative overflow-hidden border border-brand-100">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div>
+          <span class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px] font-bold">Step 2: Studio Activation</span>
+          <h3 class="text-xl font-black text-slate-900 mt-1">1-Year Studio License Activate Karein</h3>
+        </div>
+        <button onclick="closeCustomerPaywallModal()" class="p-2 text-slate-400 hover:text-slate-700 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900">
+        <p>Aapka registration safalta-purvak ho gaya hai! Wedding events create karne aur photos deliver karne ke liye <strong>1-Year Pass (₹4,999)</strong> activate karein.</p>
+      </div>
+
+      <!-- Option A: Enter 1-Year License Key -->
+      <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-2.5 text-left">
+        <label class="block text-xs font-bold text-slate-800 uppercase tracking-wide">Enter Your 1-Year License Key:</label>
+        <div class="flex space-x-2">
+          <input id="customer-license-key-input" type="text" placeholder="SNAP-XXXX-XXXX-4999" class="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono font-bold text-xs uppercase text-slate-800">
+          <button onclick="handleCustomerActivateKey()" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+            Activate
+          </button>
+        </div>
+        <p class="text-[11px] text-slate-500">Agar aapne Pravin ko payment kar diya hai to unhone WhatsApp par aapko Key bheji hogi.</p>
+      </div>
+
+      <!-- Option B: UPI Payment & WhatsApp Support -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 space-y-3 text-center">
+        <div class="flex items-center justify-between text-left">
+          <div>
+            <h5 class="text-xs font-bold text-slate-900">Payment via UPI (₹4,999 / 365 Days)</h5>
+            <p class="text-[11px] text-slate-500">Scan QR or transfer to UPI ID</p>
+          </div>
+          <span class="text-xs font-black text-brand-700">₹4,999</span>
+        </div>
+
+        <div class="p-2 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-center">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi%3A%2F%2Fpay%3Fpa%3D8669173204%40upi%26pn%3DPhoto%20AI%20Studio%26am%3D4999%26cu%3DINR" alt="UPI QR" class="w-32 h-32 rounded-lg">
+        </div>
+
+        <div class="flex items-center justify-center space-x-2">
+          <span class="font-mono text-xs font-bold bg-slate-100 px-3 py-1 rounded-lg text-slate-800">8669173204@upi</span>
+          <button onclick="navigator.clipboard.writeText('8669173204@upi'); showToast('UPI ID Copied!');" class="px-2.5 py-1 bg-slate-900 text-white rounded-lg text-xs font-semibold">Copy</button>
+        </div>
+
+        <a href="https://api.whatsapp.com/send?phone=918669173204&text=Hi%20Pravin,%20I%20have%20paid%20Rs.4999%20for%20Photo%20AI%20Studio.%20Please%20activate%20my%20account." target="_blank" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center shadow-md shadow-emerald-600/25 transition-all">
+          <i data-lucide="message-circle" class="w-4 h-4 mr-1.5"></i> Send Payment Screenshot on WhatsApp (+91 8669173204)
+        </a>
+      </div>
+
+      <div class="text-center">
+        <button onclick="checkCustomerAuthStatus(true)" class="text-xs font-bold text-brand-600 hover:text-brand-800 underline">
+          Already paid? Check if Pravin has approved your account
+        </button>
       </div>
     </div>
   </div>
