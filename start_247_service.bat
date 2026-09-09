@@ -2,6 +2,11 @@
 cd /d "%~dp0"
 echo Starting FaceSnap AI Backend and Tunnel...
 
+:: 1. Free port 8000 if old instance is stuck
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":8000" ^| findstr "LISTENING"') do (
+    taskkill /F /PID %%a >nul 2>&1
+)
+
 :: Start Python Backend
 start "" /B "%~dp0backend\venv\Scripts\python.exe" -m uvicorn main:app --host 0.0.0.0 --port 8000 --app-dir "%~dp0backend"
 

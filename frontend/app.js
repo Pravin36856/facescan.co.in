@@ -1464,7 +1464,7 @@ function checkAndOpenCreateEventModal() {
 function openSharePitchModal() {
   const currentOrigin = window.location.origin;
   const demoEventId = (eventsList && eventsList.length > 0) ? eventsList[0].id : 'evt_5a538daa';
-  const defaultTunnel = 'https://receive-yard-belief-nice.trycloudflare.com';
+  const defaultTunnel = 'https://motion-monetary-francisco-year.trycloudflare.com';
   const activeBase = (currentOrigin.includes('localhost') || currentOrigin.includes('127.0.0.1'))
     ? defaultTunnel
     : currentOrigin;
