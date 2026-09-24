@@ -172,7 +172,7 @@ def generate_license_key():
     return {
         "success": True,
         "key": key,
-        "message": f"Nayi 1-Year License Key ban gayi: {key}. Photographer ko ₹4,999 lene ke baad share karein."
+        "message": f"Nayi 1-Year License Key ban gayi: {key}. Photographer ko ₹2,000 lene ke baad share karein."
     }
 
 @app.post("/api/subscription/update-seller")
@@ -190,7 +190,7 @@ def create_event(req: EventCreateRequest):
     if not sub["is_active"]:
         raise HTTPException(
             status_code=403,
-            detail="Pehle 1-Year Plan (₹4,999) buy karke activate karein tabhi naya event order create ho sakta hai."
+            detail="Pehle 1-Year Plan (₹2,000) buy karke activate karein tabhi naya event order create ho sakta hai."
         )
 
     days_dict = [{"id": d.id, "title": d.title} for d in req.days]
@@ -260,7 +260,7 @@ async def upload_photos(
     if not sub["is_active"]:
         raise HTTPException(
             status_code=403,
-            detail="Photos upload karne ke liye 1-Year Plan (₹4,999) active hona zaroori hai. Pehale subscription activate karein."
+            detail="Photos upload karne ke liye 1-Year Plan (₹2,000) active hona zaroori hai. Pehale subscription activate karein."
         )
 
     event = event_service.get_event(event_id)
@@ -393,8 +393,8 @@ def get_saas_pricing_plans():
         {
             "id": "yearly_pass",
             "name": "1-Year Unlimited Studio Pass",
-            "price_inr": "₹4,999 / Year",
-            "price_usd": "$59 / Year",
+            "price_inr": "₹2,000 / Year",
+            "price_usd": "$25 / Year",
             "events_limit": "Unlimited Weddings & Events (365 Days)",
             "storage": "Unlimited Client Face Searches & Downloads",
             "features": [

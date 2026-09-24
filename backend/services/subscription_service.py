@@ -11,16 +11,16 @@ class SubscriptionService:
         self.state: Dict[str, Any] = {
             "is_active": False,
             "plan_name": "1-Year Photographer Studio Pass",
-            "price_inr": 4999,
-            "price_display": "₹4,999 / Year",
+            "price_inr": 2000,
+            "price_display": "₹2,000 / Year",
             "activated_at": None,
             "expires_at": None,
             "upi_id": "8669173204@upi",
             "seller_contact": "+91 8669173204",
             "valid_keys": [
-                "SNAP-YEAR-4999-DEMO",
-                "SNAP-YEAR-4999-PRO1",
-                "SNAP-YEAR-4999-PRO2"
+                "SNAP-YEAR-2000-DEMO",
+                "SNAP-YEAR-2000-PRO1",
+                "SNAP-YEAR-2000-PRO2"
             ],
             "used_keys": []
         }
@@ -66,8 +66,8 @@ class SubscriptionService:
         return {
             "is_active": is_active,
             "plan_name": self.state.get("plan_name", "1-Year Photographer Studio Pass"),
-            "price_display": self.state.get("price_display", "₹4,999 / Year"),
-            "price_inr": self.state.get("price_inr", 4999),
+            "price_display": self.state.get("price_display", "₹2,000 / Year"),
+            "price_inr": self.state.get("price_inr", 2000),
             "days_left": days_left,
             "expires_at": expires_at_str,
             "upi_id": self.state.get("upi_id", "8669173204@upi"),
@@ -100,14 +100,14 @@ class SubscriptionService:
 
         return {
             "success": True,
-            "message": "Badhaai ho! Aapka 1-Year Photographer Plan (₹4,999) activate ho gaya hai!",
+            "message": "Badhaai ho! Aapka 1-Year Photographer Plan (₹2,000) activate ho gaya hai!",
             "expires_at": expires_at.strftime("%d %b %Y"),
             "days_left": 365
         }
 
     def generate_new_license_key(self) -> str:
-        """Admin helper for the USER to generate keys to sell for ₹4,999"""
-        new_key = f"SNAP-{uuid.uuid4().hex[:4].upper()}-{uuid.uuid4().hex[:4].upper()}-4999"
+        """Admin helper for the USER to generate keys to sell for ₹2,000"""
+        new_key = f"SNAP-{uuid.uuid4().hex[:4].upper()}-{uuid.uuid4().hex[:4].upper()}-2000"
         if "valid_keys" not in self.state:
             self.state["valid_keys"] = []
         self.state["valid_keys"].append(new_key)

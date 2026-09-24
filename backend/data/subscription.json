@@ -1,15 +1,16 @@
 {
   "is_active": true,
   "plan_name": "1-Year Photographer Studio Pass",
-  "price_inr": 4999,
-  "price_display": "₹4,999 / Year",
+  "price_inr": 2000,
+  "price_display": "₹2,000 / Year",
   "activated_at": null,
-  "expires_at": "2027-09-09T19:51:23.292215",
+  "expires_at": "2027-09-24T08:25:29.000000",
   "upi_id": "8669173204@upi",
   "seller_contact": "+91 8669173204",
   "valid_keys": [
-    "SNAP-YEAR-4999-PRO1",
-    "SNAP-YEAR-4999-PRO2"
+    "SNAP-YEAR-2000-DEMO",
+    "SNAP-YEAR-2000-PRO1",
+    "SNAP-YEAR-2000-PRO2"
   ],
   "used_keys": [
     {

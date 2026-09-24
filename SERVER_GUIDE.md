@@ -1,4 +1,4 @@
-﻿# FaceSnap AI - Permanent 24/7 Server Guide
+# FaceSnap AI - Permanent 24/7 Server Guide
 
 Aapke software ko kabhi band na hone aur 24/7 live rakhne ke 2 tarike hain:
 
@@ -13,7 +13,7 @@ Humne aapke computer me **Auto-Start Service** install kar di hai:
 ---
 
 ## 🚀 Tarika 2: Cloud Server Par Host Karna (Best for Selling to Photographers)
-Kyunki aap ise photographers ko ₹4,999 me sell karne wale hain, shaadi me aane wale mehmaan raat me ya subah kabhi bhi apna photo dekh sakte hain. Agar aapka PC band ho gaya to unka link nahi khulega. Isliye Cloud Server sabse best hota hai:
+Kyunki aap ise photographers ko ₹2,000 me sell karne wale hain, shaadi me aane wale mehmaan raat me ya subah kabhi bhi apna photo dekh sakte hain. Agar aapka PC band ho gaya to unka link nahi khulega. Isliye Cloud Server sabse best hota hai:
 
 ### 1-Click Cloud Hosting (Render.com ya Railway.app):
 1. Humne project me `Dockerfile` aur `render.yaml` ready kar diya hai.

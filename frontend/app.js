@@ -290,7 +290,7 @@ async function handleCreateEvent(e) {
 
 function checkAndOpenCreateEventModal() {
   if (!subscriptionData || !subscriptionData.is_active) {
-    showToast('Naya order banane ke liye 1-Year Plan (₹4,999) zaroori hai!', true);
+    showToast('Naya order banane ke liye 1-Year Plan (₹2,000) zaroori hai!', true);
     openSubscriptionModal();
     return;
   }
@@ -301,7 +301,7 @@ let targetUploadEventId = null;
 
 async function openUploadModal(eventId) {
   if (!subscriptionData || !subscriptionData.is_active) {
-    showToast('Photos upload karne ke liye 1-Year Plan (₹4,999) activate karein!', true);
+    showToast('Photos upload karne ke liye 1-Year Plan (₹2,000) activate karein!', true);
     openSubscriptionModal();
     return;
   }
@@ -983,7 +983,7 @@ function updateSubscriptionUI(data) {
   if (upiEl && data.upi_id) upiEl.innerText = data.upi_id;
   if (waBtn && data.seller_contact) {
     const cleanPhone = data.seller_contact.replace(/[^0-9]/g, '');
-    waBtn.href = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent('Hi! I want to buy the 1-Year Photo AI Plan for Rs.4999')}`;
+    waBtn.href = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent('Hi! I want to buy the 1-Year Photo AI Plan for Rs.2000')}`;
   }
 
   if (badge && badgeText) {
@@ -992,7 +992,7 @@ function updateSubscriptionUI(data) {
       badgeText.innerHTML = `🟢 1-Year Active (${data.days_left}d left)`;
     } else {
       badge.className = "inline-flex items-center px-3 py-1.5 text-xs font-bold rounded-xl bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-all shadow-sm";
-      badgeText.innerHTML = `🔒 1-Year Pass: Inactive (Buy ₹4,999)`;
+      badgeText.innerHTML = `🔒 1-Year Pass: Inactive (Buy ₹2,000)`;
     }
   }
 }
@@ -1088,7 +1088,7 @@ async function handleGenerateNewKey() {
 
     document.getElementById('new-key-display-box').classList.remove('hidden');
     document.getElementById('generated-key-text').innerText = data.key;
-    showToast('New 1-Year Key generated for ₹4,999!');
+    showToast('New 1-Year Key generated for ₹2,000!');
     if (window.lucide) lucide.createIcons();
   } catch (err) {
     console.error(err);
@@ -1150,7 +1150,7 @@ async function fetchAdminUserList() {
 
       const actionBtn = u.is_paid
         ? `<span class="text-[11px] text-emerald-700 font-bold">Key: ${u.license_key || 'ACTIVE'}</span>`
-        : `<button onclick="handleAdminApproveUser('${u.id}', '${u.identifier}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all">✅ Approve ₹4,999</button>`;
+        : `<button onclick="handleAdminApproveUser('${u.id}', '${u.identifier}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all">✅ Approve ₹2,000</button>`;
 
       return `
         <tr class="hover:bg-slate-50 transition-colors">
@@ -1248,7 +1248,7 @@ function updateAuthUi(user) {
         badgeText.innerHTML = `🟢 1-Year Active (${user.days_left || 365}d left)`;
       } else {
         badge.className = "inline-flex items-center px-3 py-1.5 text-xs font-bold rounded-xl bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-all shadow-sm";
-        badgeText.innerHTML = `🔒 1-Year Pass: Inactive (Buy ₹4,999)`;
+        badgeText.innerHTML = `🔒 1-Year Pass: Inactive (Buy ₹2,000)`;
       }
     }
   } else {
@@ -1452,7 +1452,7 @@ function checkAndOpenCreateEventModal() {
     return;
   }
   if (!currentUser.is_paid) {
-    showToast('Wedding order create karne ke liye 1-Year Pass (₹4,999) activate karein', true);
+    showToast('Wedding order create karne ke liye 1-Year Pass (₹2,000) activate karein', true);
     openCustomerPaywallModal();
     return;
   }
@@ -1487,7 +1487,7 @@ ${fullDemoUrl}
 *(Apna chehra scan karke dekhein AI kaise turant photos dhoondhta hai!)*
 
 🔥 *Special Offer for Photographers:*
-Pura 1 Saal (365 Days) Unlimited Weddings ke liye — *Sirf ₹4,999!*
+Pura 1 Saal (365 Days) Unlimited Weddings ke liye — *Sirf ₹2,000!*
 
 ✅ Unlimited Events & Photos
 ✅ Wedding Hall Standee & QR Code Generator

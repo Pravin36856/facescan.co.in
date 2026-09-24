@@ -198,7 +198,7 @@ class AuthService:
 
         return {
             "success": True,
-            "message": "Badhaai ho! Aapka 1-Year Photographer Pass (₹4,999) activate ho gaya hai!",
+            "message": "Badhaai ho! Aapka 1-Year Photographer Pass (₹2,000) activate ho gaya hai!",
             "days_left": 365,
             "expires_at": expires_at.strftime("%d %b %Y"),
             "user": user
@@ -212,7 +212,7 @@ class AuthService:
 
         now = datetime.now()
         expires_at = now + timedelta(days=365)
-        approved_key = f"SNAP-UPI-{uuid.uuid4().hex[:4].upper()}-4999"
+        approved_key = f"SNAP-UPI-{uuid.uuid4().hex[:4].upper()}-2000"
 
         user["is_paid"] = True
         user["license_key"] = approved_key
